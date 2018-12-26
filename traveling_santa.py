@@ -85,6 +85,25 @@ def plot_path2(cities, path):
     
     plt.show()
 
+
+def plot_clusters(clusters, coord):
+    fig = plt.figure(figsize=(15,10))
+    ax = fig.add_subplot(111)
+    plt.axis('off')
+    for c in clusters.values():
+        if len(c) == 0:
+            continue
+        coord_c = []
+        for i in c:
+            coord_c.append(coord[i])
+        coord_c = np.array(coord_c)
+        xs = coord_c[:,0]
+        ys = coord_c[:,1]
+        plt.scatter(xs, ys, s=10, c=(random.random(), random.random(), random.random()))
+
+    plt.show()
+
+
 def total_distance(cities, path):
     coord = cities[['X', 'Y']].values
     score = 0
@@ -205,7 +224,7 @@ def cluster_path():
         cluster_means = np.array(cluster_means)
 
     else:
-        clustering = DBSCAN(eps=6, min_samples=2).fit(coord)
+        clustering = DBSCAN(eps=4, min_samples=5).fit(coord)
         print(clustering, flush=True)
         labels = clustering.labels_ # -1 is noisy point, has the cluster label for every point
 
@@ -269,13 +288,15 @@ def cluster_path():
     # Compute the distance matrix
     dist_matrix = distance_matrix(cluster_means, cluster_means)
 
-    # solve TSP for cluster means
-    cluster_path_unopt = solve_tsp(dist_matrix, endpoints=(north_pole_cluster, closest_to_north_pole))
-    print("unopt done", flush=True)
-    cluster_path = optimize_solution(dist_matrix, path_to_connections(cluster_path_unopt), endpoints=(north_pole_cluster, closest_to_north_pole))
-    print("opt done", flush=True)
+    plot_clusters(clusters, coord)
 
-    plot_path(cluster_means, cluster_path_unopt, north_pole_cluster)
+    # solve TSP for cluster means
+    cluster_path = solve_tsp(dist_matrix, endpoints=(north_pole_cluster, closest_to_north_pole))
+    # print("unopt done", flush=True)
+    # cluster_path = optimize_solution(dist_matrix, path_to_connections(cluster_path_unopt), endpoints=(north_pole_cluster, closest_to_north_pole))
+    # print("opt done", flush=True)
+
+    # plot_path(cluster_means, cluster_path_unopt, north_pole_cluster)
     plot_path(cluster_means, cluster_path, north_pole_cluster)
 
     # get cluster start and end points
@@ -386,6 +407,7 @@ def cluster_path():
             print("len {}, solving TSP".format(len(cluster_points)), flush=True)
             dist_matrix = distance_matrix(cluster_points, cluster_points)
             inner_cluster_path = solve_tsp(dist_matrix, endpoints=(startpoint, endpoint))
+            # inner_cluster_path = optimize_solution(dist_matrix, path_to_connections(inner_cluster_path_unopt), endpoints=(startpoint, endpoint))
             step_num += len(inner_cluster_path)
             path.extend([inner_cluster_index_to_actual_index[i] for i in inner_cluster_path])
 
